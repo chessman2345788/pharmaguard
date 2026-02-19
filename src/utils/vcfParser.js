@@ -1,9 +1,8 @@
 /**
- * Mock VCF Parser for PharmaGuard AI
+ * PharmaGuard AI – VCF Parser
  * Extracts genes and variants from VCF content
  */
 export const parseVCF = async (fileContent) => {
-  // Simulate parsing delay
   await new Promise(resolve => setTimeout(resolve, 1500));
 
   const lines = fileContent.split('\n');
@@ -41,13 +40,10 @@ export const parseVCF = async (fileContent) => {
     }
   });
 
-  // If no genes found but file is valid, return some mock data for demonstration if requested
-  // In a real app we'd just return empty or error
   return variants;
 };
 
 export const getPhenotype = (gene, diplotype) => {
-  // Mock phenotypes for diplotypes
   const phenotypes = {
     'CYP2D6': {
       '*4/*4': 'PM', // Poor Metabolizer

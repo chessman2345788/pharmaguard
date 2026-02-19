@@ -11,7 +11,6 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import CountUp from '../components/CountUp';
 
-/* ── Hero ──────────────────────────────────────────────────────────────── */
 const Hero = () => {
   const navigate = useNavigate();
 
@@ -178,7 +177,6 @@ const Hero = () => {
   );
 };
 
-/* ── Impact numbers strip ────────────────────────────────────────────── */
 const StatsStrip = () => {
   const stats = [
     { end: 100, suffix: 'k+', label: 'Adverse Drug Deaths Preventable Annually', icon: AlertCircle },
@@ -216,7 +214,6 @@ const StatsStrip = () => {
   );
 };
 
-/* ── Flow cards: VCF → AI → Report ─────────────────────────────────── */
 const FlowCards = () => {
   const steps = [
     {
@@ -240,8 +237,8 @@ const FlowCards = () => {
     {
       step: '03',
       icon: FileText,
-      title: 'Clinical PDF Report',
-      desc: 'Download a clinic-ready PDF with color-coded risk levels, dosing advice, and citations.',
+      title: 'Clinical Risk Insights',
+      desc: 'View comprehensive insights with color-coded risk levels, dosing advice, and citations.',
       color: 'text-amber-500',
       bg: 'bg-amber-50',
       border: 'border-amber-100',
@@ -333,7 +330,6 @@ const FlowCards = () => {
   );
 };
 
-/* ── Genes grid ──────────────────────────────────────────────────────── */
 const GenesGrid = () => {
   const genes = [
     { name: 'CYP2D6', drug: 'Codeine, Tamoxifen', desc: 'Metabolizes 25% of all clinical drugs' },
@@ -398,7 +394,6 @@ const GenesGrid = () => {
   );
 };
 
-/* ── Final CTA ──────────────────────────────────────────────────────── */
 const FinalCTA = () => {
   const navigate = useNavigate();
   return (
@@ -448,7 +443,6 @@ const FinalCTA = () => {
   );
 };
 
-/* ── Page Assembly ──────────────────────────────────────────────────── */
 const LandingPage = () => (
   <div className="bg-white">
     <Hero />

@@ -11,26 +11,26 @@ Submitted for **RIFT 2026 Hackathon** within the **Pharmacogenomics / Explainabl
 ## 🔗 Live Demo & Video
 
 - **Live Application**: [https://patientpoint01.netlify.app/](https://patientpoint01.netlify.app/)
-- **Demo Video**: [LinkedIn Video Link](https://linkedin.com) _(Placeholder)_
+- **Hackathon Post**: [LinkedIn Post](https://www.linkedin.com/posts/satyam-srivastava-7a9745268_hackathonexperience-innovation-techcommunity-ugcPost-7430395926223159297-i9t7?utm_source=share&utm_medium=member_android&rcm=ACoAAEGa_jEBafihFjEX723_Nu8ExXQBX_KDBQI)
 
 ## 🏗️ Architecture
 
 PharmaGuard is built as a modern full-stack web application:
 
-- **Frontend**: Next.js 15 (App Router), React, Tailwind CSS for a premium, responsive UI.
+- **Frontend**: React + Vite, Framer Motion for a premium, responsive UI.
 - **Theme Support**: Built-in Dark/Light mode with system preference detection.
 - **Localization**: Multi-language support (English, Spanish, Hindi).
-- **Backend**: Next.js API Routes for server-side VCF parsing and risk analysis.
+- **Backend**: Node.js & Express for server-side VCF parsing and risk analysis.
 - **Logic Layer**:
-  - **VCF Parser**: Custom TypeScript implementation to extract variants from standard VCF v4.2 files.
+  - **VCF Parser**: Custom JavaScript implementation to extract variants from standard VCF v4.2 files.
   - **Risk Engine**: Deterministic rule-based engine mapping Genotype -> Phenotype -> Clinical Risk based on CPIC guidelines.
   - **Knowledge Base**: Curated rules for genes CYP2D6, CYP2C19, CYP2C9, SLCO1B1, TPMT, DPYD.
-  - **AI Layer**: Integration with LLM (stubbed for submission safety) to generate human-readable clinical explanations.
+  - **AI Layer**: Integration with LLM (Google Gemini API) to generate human-readable clinical explanations.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15
-- **Language**: TypeScript
+- **Framework**: Vite + React
+- **Language**: JavaScript
 - **Styling**: Tailwind CSS v4
 - **Linting**: ESLint
 

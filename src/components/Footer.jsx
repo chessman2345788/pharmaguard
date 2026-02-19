@@ -23,6 +23,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-6">
               <a href="https://github.com/chessman2345788/pharmaguard.git" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-primary transition-colors">GitHub Repository</a>
+              <a href="https://www.linkedin.com/posts/satyam-srivastava-7a9745268_hackathonexperience-innovation-techcommunity-ugcPost-7430395926223159297-i9t7?utm_source=share&utm_medium=member_android&rcm=ACoAAEGa_jEBafihFjEX723_Nu8ExXQBX_KDBQI" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-primary transition-colors">LinkedIn Post</a>
               <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-primary transition-colors">Documentation</button>
             </div>
           </div>

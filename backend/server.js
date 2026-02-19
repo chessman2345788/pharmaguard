@@ -13,7 +13,6 @@ import chatRouter from './routes/chat.js';
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// ── Middleware ──────────────────────────────────────────────────────────────
 app.use(
     cors({
         origin: ['http://localhost:5173', 'http://localhost:3000'],
@@ -24,7 +23,6 @@ app.use(
 app.use(express.json({ limit: '11mb' }));
 app.use(express.urlencoded({ extended: true, limit: '11mb' }));
 
-// ── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/analyze', analyzeRouter);
 app.use('/api/chat', chatRouter);
 
@@ -50,7 +48,6 @@ app.use((err, req, res, _next) => {
     res.status(500).json({ error: err.message || 'Internal server error.' });
 });
 
-// ── Start ───────────────────────────────────────────────────────────────────
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🧬 PharmaGuard API running at http://localhost:${PORT}`);
     console.log(`   ✅ Health:   http://localhost:${PORT}/api/health`);

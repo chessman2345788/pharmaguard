@@ -1,5 +1,5 @@
 /**
- * Risk Prediction Mock Engine
+ * PharmaGuard AI – Risk Prediction Engine
  */
 export const predictRisk = (variants, drugs) => {
   const results = [];
@@ -14,7 +14,6 @@ export const predictRisk = (variants, drugs) => {
     let confidence = 0.95;
     let summary = '';
 
-    // Rule 1: Codeine + CYP2D6 Poor Metabolizer
     if (drug === 'CODEINE') {
       const v = variants.find(v => v.gene === 'CYP2D6');
       if (v && v.diplotype.includes('*4')) {
@@ -29,7 +28,6 @@ export const predictRisk = (variants, drugs) => {
       }
     }
 
-    // Rule 2: Clopidogrel + CYP2C19 PM
     if (drug === 'CLOPIDOGREL') {
       const v = variants.find(v => v.gene === 'CYC2C19' || v.gene === 'CYP2C19');
       if (v && (v.diplotype.includes('*2') || v.diplotype.includes('*3'))) {
@@ -44,7 +42,6 @@ export const predictRisk = (variants, drugs) => {
       }
     }
 
-    // Rule 3: Simvastatin + SLCO1B1
     if (drug === 'SIMVASTATIN') {
       const v = variants.find(v => v.gene === 'SLCO1B1');
       if (v) {
@@ -59,7 +56,6 @@ export const predictRisk = (variants, drugs) => {
       }
     }
 
-    // Rule 4: Warfarin + CYP2C9
     if (drug === 'WARFARIN') {
       const v = variants.find(v => v.gene === 'CYP2C9');
       if (v) {
