@@ -4,7 +4,7 @@
  * clinic-ready pharmacogenomics report.
  */
 
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 const RISK_COLORS = {
