@@ -51,7 +51,7 @@ app.use((err, req, res, _next) => {
 });
 
 // ── Start ───────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🧬 PharmaGuard API running at http://localhost:${PORT}`);
     console.log(`   ✅ Health:   http://localhost:${PORT}/api/health`);
     console.log(`   ✅ Analyze:  POST http://localhost:${PORT}/api/analyze`);
