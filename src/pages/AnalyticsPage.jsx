@@ -20,7 +20,6 @@ const AnalyticsPage = () => {
   const navigate = useNavigate();
   const { analysisResults } = useStore();
 
-  // Process data for charts
   const data = useMemo(() => {
     // Default mock data for presentation quality
     const baseData = {
@@ -52,10 +51,6 @@ const AnalyticsPage = () => {
       ]
     };
 
-    if (analysisResults && analysisResults.length > 0) {
-      // Integration with real data if needed, but keeping mock for "attractive graph visualizations" as requested
-      // to ensure hackathon presentation quality.
-    }
 
     return baseData;
   }, [analysisResults]);
@@ -86,7 +81,6 @@ const AnalyticsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      {/* Top Header Section */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
         <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
            <motion.div
@@ -130,10 +124,8 @@ const AnalyticsPage = () => {
            </motion.div>
         </div>
 
-        {/* Analytics Grid - 2x2 Desktop, 1 Column Mobile */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
            
-           {/* 1) Risk Severity Distribution (Pie) */}
            <Card title="Risk Severity Factor" icon={PieChartIcon} delay={0.1}>
               <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
@@ -162,7 +154,6 @@ const AnalyticsPage = () => {
               </ResponsiveContainer>
            </Card>
 
-           {/* 2) Variant Distribution (Bar) */}
            <Card title="Genomic Variance Density" icon={BarChart3} delay={0.2}>
               <ResponsiveContainer width="100%" height="100%">
                  <ReBarChart data={data.bar}>
@@ -195,7 +186,6 @@ const AnalyticsPage = () => {
               </ResponsiveContainer>
            </Card>
 
-           {/* 3) Confidence Score Trends (Line) */}
            <Card title="Engine Certainty Index" icon={TrendingUp} delay={0.3}>
               <ResponsiveContainer width="100%" height="100%">
                  <LineChart data={data.line}>
@@ -228,7 +218,6 @@ const AnalyticsPage = () => {
               </ResponsiveContainer>
            </Card>
 
-           {/* 4) Gene Impact Radar (Radar) */}
            <Card title="Clinical Impact Matrix" icon={RadarIcon} delay={0.4}>
               <ResponsiveContainer width="100%" height="100%">
                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data.radar}>
@@ -258,7 +247,6 @@ const AnalyticsPage = () => {
 
         </div>
 
-        {/* Simplified Clinical Bottom Insight */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}

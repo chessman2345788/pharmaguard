@@ -9,7 +9,6 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           
-          {/* Brand Column */}
           <div className="col-span-1 md:col-span-2 flex flex-col items-start">
             <Link to="/" className="flex items-center space-x-3 mb-6 group">
               <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center border border-primary/10">
@@ -28,7 +27,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Links Columns */}
           <div className="col-span-1">
             <h4 className="font-black text-gray-900 mb-6 uppercase text-[9px] tracking-[0.3em]">Navigation</h4>
             <ul className="space-y-3">

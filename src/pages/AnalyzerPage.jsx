@@ -44,7 +44,6 @@ const AnalyzerPage = () => {
   const [analysisContext, setAnalysisContext] = useState([]);
   const location = useLocation();
 
-  // Auto-trigger demo when coming from the landing page "Launch Live Demo" button
   useEffect(() => {
     if (location.state?.autoDemo) {
       setFile({ name: 'demo_patient_001.vcf', size: 1240 });
@@ -108,7 +107,6 @@ const AnalyzerPage = () => {
   };
 
   const handleAnalyze = async () => {
-    // Validation: Require file only if NOT in demo mode
     if (!file && !isDemoMode) {
       setError('Please upload a VCF file first.');
       return;
@@ -121,7 +119,6 @@ const AnalyzerPage = () => {
     setIsAnalyzing(true);
     setError(null);
 
-    // Hardcoded Demo Results (Bypass Backend)
     if (isDemoMode) {
       setTimeout(() => {
         const demoResults = [
@@ -190,7 +187,6 @@ const AnalyzerPage = () => {
           }
         ];
 
-        // Filter demo results based on user selection
         const filteredDemo = demoResults.filter(r => selectedDrugs.includes(r.drug_name));
 
         const setResults = useStore.getState().setAnalysisResults;
@@ -244,7 +240,6 @@ const AnalyzerPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="flex flex-col lg:flex-row gap-8">
 
-        {/* Left Panel: Analyzer Inputs */}
         <div className="flex-1 space-y-8">
           <div className="bg-white/50 p-8 rounded-3xl border border-white shadow-xl backdrop-blur-sm">
             <div className="flex items-center space-x-3 mb-6">
@@ -257,7 +252,6 @@ const AnalyzerPage = () => {
               </div>
             </div>
 
-            {/* Drag & Drop Zone */}
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -318,7 +312,6 @@ const AnalyzerPage = () => {
                     </button>
                   </div>
 
-                  {/* VCF Stats Panel */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white p-4 rounded-2xl border border-gray-100 text-center">
                       <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Variants</div>
@@ -354,7 +347,6 @@ const AnalyzerPage = () => {
               </motion.div>
             )}
 
-            {/* Drug Selection */}
             <div className="mt-12">
               <h3 className="text-lg font-bold mb-4 flex items-center space-x-2">
                 <Plus className="w-5 h-5 text-primary" />
@@ -376,7 +368,6 @@ const AnalyzerPage = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="mt-12 flex space-x-4">
               <button
                 onClick={handleAnalyze}
@@ -411,10 +402,8 @@ const AnalyzerPage = () => {
           </div>
         </div>
 
-        {/* Right Panel: AI Chatbot */}
         <div className="w-full lg:w-[400px] flex flex-col">
           <div className="bg-white rounded-3xl border border-gray-100 shadow-xl flex flex-col h-[700px] overflow-hidden">
-            {/* Header */}
             <div className="bg-primary p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -432,7 +421,6 @@ const AnalyzerPage = () => {
               </div>
             </div>
 
-            {/* Chat History */}
             <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50/50">
               {chatHistory.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -458,7 +446,6 @@ const AnalyzerPage = () => {
               )}
             </div>
 
-            {/* Suggestions */}
             <div className="px-6 py-4 flex space-x-2 overflow-x-auto no-scrollbar">
               {['Explain CYP2D6', 'What is CYP2C19?', 'How does warfarin work?'].map((q) => (
                 <button
@@ -471,7 +458,6 @@ const AnalyzerPage = () => {
               ))}
             </div>
 
-            {/* Input */}
             <div className="p-4 bg-white border-t border-gray-100">
               <div className="relative">
                 <input

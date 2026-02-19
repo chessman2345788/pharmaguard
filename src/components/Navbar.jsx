@@ -54,7 +54,6 @@ const Navbar = () => {
               </div>
             </Link>
 
-             {/* Demo Mode Control */}
              <div className="hidden lg:flex items-center ml-8">
                 <button 
                   onClick={() => setDemoMode(!isDemoMode)}
@@ -75,7 +74,6 @@ const Navbar = () => {
              </div>
           </div>
 
-          {/* Desktop Links */}
           <div className="hidden md:flex items-center space-x-12">
             {navLinks.map((link) => (
               <Link
@@ -89,7 +87,6 @@ const Navbar = () => {
                   {link.name}
                 </span>
                 
-                {/* Refined Underline Animation */}
                 <motion.div 
                   initial={false}
                   animate={{ 
@@ -102,7 +99,6 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <div className="h-6 w-px bg-gray-100 mx-2" />
             <Link 
@@ -114,7 +110,6 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -126,7 +121,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
