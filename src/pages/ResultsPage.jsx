@@ -273,7 +273,7 @@ const ResultsPage = () => {
                                  <motion.button
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={handleDownloadJSON}
+                                    onClick={handleDownloadPDF}
                                     className="hidden md:flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white px-5 py-2.5 rounded-xl border border-primary/10 shadow-sm transition-all"
                                  >
                                     <Download className="w-3.5 h-3.5" />
