@@ -12,38 +12,47 @@ const API_BASE = '/api'; // proxied to http://localhost:5000 via Vite
  * @param {Array|null} demoVariants - Pre-built demo variants (if no file)
  * @returns {Promise<{ vcf_stats: object, results: Array }>}
  */
+import { parseVCF } from './vcfParser';
+import { predictRisk } from './riskEngine';
+
+/**
+ * Upload a VCF file and analyze against selected drugs.
+ * @param {File|null} file - VCF file object (null if using demo data)
+ * @param {string[]} drugs - Array of drug names
+ * @param {Array|null} demoVariants - Pre-built demo variants (if no file)
+ * @returns {Promise<{ vcf_stats: object, results: Array }>}
+ */
 export const analyzeVCF = async (file, drugs, demoVariants = null) => {
-    const formData = new FormData();
-
-    if (file) {
-        formData.append('file', file);
-    } else if (demoVariants) {
-        // For demo mode: send pre-defined variants as JSON string
-        formData.append('demoData', JSON.stringify(demoVariants));
-        // Attach a dummy blank file to satisfy multer when needed
-    }
-
-    formData.append('drugs', drugs.join(','));
-
-    const response = await fetch(`${API_BASE}/analyze`, {
-        method: 'POST',
-        body: formData,
-    });
-
-    const text = await response.text();
-    let data;
     try {
-        data = JSON.parse(text);
+        let variants = [];
+
+        if (file) {
+            // Read file content in browser
+            const text = await file.text();
+            variants = await parseVCF(text);
+        } else if (demoVariants) {
+            variants = demoVariants;
+        }
+
+        // Perform risk analysis locally
+        const riskResults = predictRisk(variants, drugs);
+
+        // Calculate stats
+        const vcf_stats = {
+            totalVariants: variants.length,
+            genesMatched: new Set(variants.map(v => v.gene)).size,
+            actionableVariants: riskResults.filter(r => r.risk_assessment.risk_label !== 'Safe').length
+        };
+
+        return {
+            vcf_stats,
+            results: riskResults
+        };
+
     } catch (err) {
-        console.error('Backend returned non-JSON:', text);
-        throw new Error(`Server returned invalid response: ${text.slice(0, 100)}...`);
+        console.error('Analysis failed:', err);
+        throw new Error('Failed to analyze VCF file. Please check the file format.');
     }
-
-    if (!response.ok) {
-        throw new Error(data.error || `Server error: ${response.status}`);
-    }
-
-    return data;
 };
 
 /**
