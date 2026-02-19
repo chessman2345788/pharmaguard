@@ -46,11 +46,7 @@ const AnalyzerPage = () => {
 
   useEffect(() => {
     if (location.state?.autoDemo) {
-      setFile({ name: 'demo_patient_001.vcf', size: 1240 });
-      setIsDemoMode(true);
-      setSelectedDrugs(['CODEINE', 'CLOPIDOGREL', 'SIMVASTATIN']);
-      setVcfStats({ totalVariants: 3, genesMatched: 3, actionableVariants: 3 });
-      setError(null);
+      handleDemoMode();
       window.history.replaceState({}, '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
