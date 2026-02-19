@@ -1,102 +1,100 @@
-import { v4 as uuidv4 } from 'uuid';
+/**
+ * PharmaGuard AI – Risk Engine
+ * Rules-driven engine. Matches detected variants against the knowledge base
+ * and returns structured clinical analysis results per drug.
+ */
+
+import { KNOWLEDGE_BASE, DEFAULT_RESULT } from './knowledgeBase.js';
+
+const GENE_MAP = {
+    CODEINE: 'CYP2D6',
+    WARFARIN: 'CYP2C9',
+    CLOPIDOGREL: 'CYP2C19',
+    SIMVASTATIN: 'SLCO1B1',
+    AZATHIOPRINE: 'TPMT',
+    FLUOROURACIL: 'DPYD',
+};
 
 /**
- * Core Pharmacogenomic Logic
- * Maps variants to phenotypes and drug risks
+ * Match a variant's diplotype against a list of patterns (case-insensitive partial match)
  */
-const normalizeSeverity = (value) => value.toLowerCase();
-
-export const analyzeRisk = async (variants, selectedDrugs = ['CODEINE', 'CLOPIDOGREL', 'SIMVASTATIN', 'WARFARIN']) => {
-  const patient_id = "PG-" + Math.floor(1000 + Math.random() * 9000);
-  const results = [];
-
-  selectedDrugs.forEach(drug => {
-    let risk = 'Safe';
-    let phenotype = 'Normal Metabolizer';
-    let gene = 'N/A';
-    let recommendation = 'Standard dosing as per local guidelines.';
-    let severity = 'low';
-    let summary = 'No significant genetic interactions found for this drug.';
-    let evidenceLevel = 'A';
-
-    const v2d6 = variants.find(v => v.gene === 'CYP2D6');
-    const v2c19 = variants.find(v => v.gene === 'CYP2C19');
-    const vslco = variants.find(v => v.gene === 'SLCO1B1');
-    const v2c9 = variants.find(v => v.gene === 'CYP2C9');
-
-    if (drug === 'CODEINE' && v2d6 && (v2d6.star === '*4' || v2d6.star === '*3')) {
-      risk = 'Toxic';
-      gene = 'CYP2D6';
-      phenotype = 'Poor Metabolizer';
-      severity = 'high';
-      recommendation = 'Avoid codeine. Poor metabolism leads to lack of efficacy or unexpected toxicity. Consider morphine or non-opioids.';
-      summary = 'Genetic variation in CYP2D6 reduces the conversion of codeine to morphine.';
-    }
-
-    if (drug === 'CLOPIDOGREL' && v2c19 && (v2c19.star === '*2' || v2c19.star === '*3')) {
-      risk = 'Ineffective';
-      gene = 'CYP2C19';
-      phenotype = 'Poor Metabolizer';
-      severity = 'high';
-      recommendation = 'High risk of therapeutic failure. Use alternative antiplatelet therapy like Ticagrelor.';
-      summary = 'CYP2C19 poor metabolizers cannot activate clopidogrel efficiently.';
-    }
-
-    if (drug === 'SIMVASTATIN' && vslco && vslco.star === '*5') {
-      risk = 'Toxic';
-      gene = 'SLCO1B1';
-      phenotype = 'Decreased Function';
-      severity = 'high';
-      recommendation = 'Limit simvastatin dose to 20mg or switch to Rosuvastatin.';
-      summary = 'Increased plasma concentrations of simvastatin increase myopathy risk.';
-      evidenceLevel = 'B';
-    }
-
-    if (drug === 'WARFARIN' && v2c9 && (v2c9.star === '*2' || v2c9.star === '*3')) {
-      risk = 'Adjust Dosage';
-      gene = 'CYP2C9';
-      phenotype = 'Intermediate Metabolizer';
-      severity = 'moderate';
-      recommendation = 'Consider 20-30% dose reduction. Monitor INR closely.';
-      summary = 'Reduced warfarin clearance requires lower maintenance doses.';
-    }
-
-    results.push({
-      patient_id,
-      drug: drug,
-      timestamp: new Date().toISOString(),
-      risk_assessment: {
-        risk_label: risk,
-        confidence_score: 98.4,
-        severity: normalizeSeverity(severity)
-      },
-      pharmacogenomic_profile: {
-        primary_gene: gene,
-        diplotype: gene !== 'N/A' ? `*1/${variants.find(v => v.gene === gene)?.star || 'Unknown'}` : 'Normal',
-        phenotype: phenotype,
-        detected_variants: variants.filter(v => v.gene === gene).map(v => ({
-           rsID: v.rs,
-           gene: v.gene,
-           star_allele: v.star,
-           effect: phenotype
-        }))
-      },
-      clinical_recommendation: {
-        dosing_advice: recommendation,
-        guideline: "CPIC",
-        evidence_level: evidenceLevel
-      },
-      llm_generated_explanation: {
-        summary: summary,
-        mechanism: gene !== 'N/A'
-          ? `Variation in ${gene} affects the metabolism of ${drug}.`
-          : "No actionable pharmacogenomic variant detected for this drug.",
-        citations: gene !== 'N/A'
-          ? [`CPIC ${gene}`, `PharmGKB ${drug}`]
-          : ["CPIC Guidelines", "PharmGKB References"]
-      }
-    });
-  });
-
-  return results;
+const matchDiplotype = (diplotype, patterns) => {
+    if (!diplotype || diplotype === 'N/A') return false;
+    const d = diplotype.toUpperCase();
+    return patterns.some((p) => d.includes(p.toUpperCase()));
 };
+
+/**
+ * Predict pharmacogenomic risk for a list of drugs given parsed VCF variants.
+ * @param {Array} variants - Output from vcfParser.parseVCF
+ * @param {string[]} drugs - List of drug names (uppercase)
+ * @returns {Array} Array of structured analysis result objects
+ */
+export const predictRisk = (variants, drugs) => {
+    const results = [];
+    const timestamp = new Date().toISOString();
+
+    for (const drugName of drugs) {
+        const drug = drugName.toUpperCase();
+        const drugConfig = KNOWLEDGE_BASE[drug];
+
+        if (!drugConfig) {
+            // Drug not in knowledge base → return informational result
+            results.push(buildResult(drug, 'N/A', null, DEFAULT_RESULT, [], timestamp));
+            continue;
+        }
+
+        const { gene, rules } = drugConfig;
+
+        // Find all variants for the relevant gene
+        const geneVariants = variants.filter((v) => v.gene === gene);
+        const primaryVariant = geneVariants[0] || null;
+        const diplotype = primaryVariant?.diplotype || null;
+
+        // Match against rules (first match wins – highest-risk rules should be first in KB)
+        let matched = null;
+        for (const rule of rules) {
+            if (diplotype && matchDiplotype(diplotype, rule.pattern)) {
+                matched = rule;
+                break;
+            }
+        }
+
+        // If no variant found at all, check if diplotype is explicitly normal
+        if (!matched) {
+            matched = rules.find((r) => r.risk === 'Safe') || {
+                ...DEFAULT_RESULT,
+                mechanism: `No ${gene} variant detected in uploaded VCF. Assuming normal metabolizer phenotype.`,
+            };
+        }
+
+        results.push(buildResult(drug, gene, primaryVariant, matched, geneVariants, timestamp));
+    }
+
+    return results;
+};
+
+const buildResult = (drug, gene, primaryVariant, rule, geneVariants, timestamp) => ({
+    patient_id: `PG-${Date.now().toString(36).toUpperCase()}`,
+    drug_name: drug,
+    timestamp,
+    risk_assessment: {
+        risk_label: rule.risk,
+        severity: rule.severity,
+        confidence_score: rule.risk === 'Safe' ? 0.97 : 0.94,
+    },
+    pharmacogenomic_profile: {
+        primary_gene: gene,
+        diplotype: primaryVariant?.diplotype || 'N/A',
+        phenotype: rule.phenotype,
+        detected_variants: geneVariants,
+    },
+    clinical_recommendation: {
+        dosing_advice: rule.recommendation,
+    },
+    llm_explanation: {
+        summary: rule.mechanism,
+        mechanism: rule.mechanism,
+        variant_citations: gene !== 'N/A' ? [`CPIC: ${gene}–${drug}`, `PharmGKB: ${gene}`] : [],
+    },
+});

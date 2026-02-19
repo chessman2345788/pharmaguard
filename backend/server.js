@@ -1,44 +1,61 @@
+/**
+ * PharmaGuard AI – Express Backend Server
+ * Runs on port 5001 (proxied by Vite in development)
+ */
+
+import dotenv from 'dotenv';
+dotenv.config({ path: './backend/.env' });
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import apiRoutes from './routes/api.js';
-
-dotenv.config();
+import analyzeRouter from './routes/analyze.js';
+import chatRouter from './routes/chat.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ── Middleware ──────────────────────────────────────────────────────────────
+app.use(
+    cors({
+        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
+app.use(express.json({ limit: '11mb' }));
+app.use(express.urlencoded({ extended: true, limit: '11mb' }));
 
-// Routes
-app.use('/api', apiRoutes);
+// ── Routes ──────────────────────────────────────────────────────────────────
+app.use('/api/analyze', analyzeRouter);
+app.use('/api/chat', chatRouter);
 
-// Health Check
-app.get('/', (req, res) => {
-  res.send('PharmaGuard AI Backend is Running');
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'PharmaGuard API',
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        gemini_enabled: !!(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here'),
+    });
 });
 
-// Error Handler
-app.use((err, req, res, next) => {
-  console.error("--- BACKEND ERROR ---");
-  console.error(err);
-  console.error("---------------------");
-
-  // Handle Multer errors specifically
-  if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ error: 'File size too large. Max 5MB allowed.' });
-  }
-
-  const status = err.status || 500;
-  const message = err.message || 'An unexpected error occurred on the server.';
-  res.status(status).json({ error: message });
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ error: `Route ${req.method} ${req.url} not found.` });
 });
 
+// Global error handler
+app.use((err, req, res, _next) => {
+    console.error('[Server Error]', err.message);
+    res.status(500).json({ error: err.message || 'Internal server error.' });
+});
+
+// ── Start ───────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n--------------------------------------`);
-  console.log(`🚀 PharmaGuard AI Backend Running`);
-  console.log(`📡 URL: http://localhost:${PORT}`);
-  console.log(`--------------------------------------\n`);
+    console.log(`\n🧬 PharmaGuard API running at http://localhost:${PORT}`);
+    console.log(`   ✅ Health:   http://localhost:${PORT}/api/health`);
+    console.log(`   ✅ Analyze:  POST http://localhost:${PORT}/api/analyze`);
+    console.log(`   ✅ Chat:     POST http://localhost:${PORT}/api/chat`);
+    const hasKey = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here';
+    console.log(`   ${hasKey ? '🤖 Gemini AI: ENABLED' : '⚠️  Gemini AI: DISABLED (no API key – using fallback responses)'}\n`);
 });
