@@ -1,0 +1,10 @@
+##fileformat=VCFv4.2
+##fileDate=20240219
+##source=PharmaGuard_Test_Generator
+##reference=hg38
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=RS,Number=1,Type=String,Description="dbSNP ID">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr22	42126611	rs3892097	C	T	.	PASS	GENE=CYP2D6;RS=rs3892097;AF=0.05
+chr10	94938658	rs1057910	A	C	.	PASS	GENE=CYP2C9;RS=rs1057910;AF=0.10
+chr10	94981296	rs1799853	C	T	.	PASS	GENE=CYP2C9;RS=rs1799853
