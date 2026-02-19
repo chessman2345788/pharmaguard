@@ -37,7 +37,7 @@ PharmaGuard is built as a modern full-stack web application:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/pharmaguard.git
+   git clone https://github.com/chessman2345788/pharmaguard.git
    cd pharmaguard
    ```
 
@@ -100,9 +100,14 @@ Analyzes a VCF file against a list of drugs.
 4. View the color-coded risk cards and AI explanations.
 5. Download the detailed JSON report.
 
-## 👥 Team Members
+## 👥 Team Members — Fusion X
 
-- [Your Name/Team Name]
+| Name              | Role                       |
+| ----------------- | -------------------------- |
+| Satyam Srivastava | Lead Developer             |
+| Harsh Mishra      | Backend & AI Integration   |
+| Keshav Pandey     | Frontend & UI/UX           |
+| Siddhant Soni     | Data Engineering & Testing |
 
 ---
 
