@@ -6,9 +6,9 @@ import { geminiChatService } from '../utils/geminiChatService';
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { analysisResults, selectedDrugs } = useStore();
+  const { analysisResults, transparencyLevel, explanationMode, setTransparencyLevel } = useStore();
   const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Hello! I am your PharmaGuard AI clinical assistant. I can explain your pharmacogenomic results or provide general drug-gene education. How can I assist you today?' }
+    { role: 'bot', text: 'Hello! I am your PharmaGuard AI clinical assistant. How can I assist you with your pharmacogenomics results today?' }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +30,11 @@ const FloatingChatbot = () => {
     setIsLoading(true);
 
     try {
-      // Pass the analysis results if they exist, otherwise null
-      const response = await geminiChatService(text, analysisResults);
+      const response = await geminiChatService(text, analysisResults, transparencyLevel, explanationMode);
       
       setMessages(prev => [...prev, { role: 'bot', text: response }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: "AI assistant temporarily unavailable. Please check your connection or try again later." }]);
+      setMessages(prev => [...prev, { role: 'bot', text: "AI assistant temporarily unavailable. Please verify the backend server is running." }]);
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +78,39 @@ const FloatingChatbot = () => {
                   </div>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="hover:bg-white/20 p-2.5 rounded-2xl transition-all active:scale-95">
-                  <Minimize2 className="w-6 h-6" />
+                   <Minimize2 className="w-6 h-6" />
                 </button>
+              </div>
+
+              {/* Feature 2: AI Transparency Slider */}
+              <div className="mt-6 flex flex-col space-y-2 relative z-10">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/60">AI Depth Control</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white/90">{transparencyLevel}</span>
+                 </div>
+                 <div className="relative h-1 bg-white/10 rounded-full overflow-hidden">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="2" 
+                      step="1"
+                      value={transparencyLevel === 'simple' ? 0 : transparencyLevel === 'detailed' ? 1 : 2}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setTransparencyLevel(val === 0 ? 'simple' : val === 1 ? 'detailed' : 'research');
+                      }}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    />
+                    <motion.div 
+                      className="absolute top-0 left-0 h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                      animate={{ width: transparencyLevel === 'simple' ? '33%' : transparencyLevel === 'detailed' ? '66%' : '100%' }}
+                    />
+                 </div>
+                 <div className="flex justify-between text-[7px] font-black text-white/40 uppercase tracking-tighter">
+                    <span>Basic</span>
+                    <span>Standard</span>
+                    <span>Deep</span>
+                 </div>
               </div>
             </div>
 

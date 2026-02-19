@@ -182,10 +182,38 @@ const Hero = () => {
               </svg>
             </motion.div>
           </div>
-
         </div>
       </div>
     </section>
+  );
+};
+
+const IntelligenceStrip = () => {
+  return (
+    <div className="bg-white border-y border-gray-50 py-4 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-4">
+           {[
+             { icon: Dna, label: "Variant Engine", color: "text-blue-500" },
+             { icon: Brain, label: "AI Clinical Engine", color: "text-primary" },
+             { icon: BarChart3, label: "Risk Engine", color: "text-amber-500" }
+           ].map((item, i) => (
+             <motion.div 
+               key={i}
+               initial={{ opacity: 0, y: 10 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               transition={{ delay: i * 0.1 }}
+               className="flex items-center space-x-3 group"
+             >
+                <item.icon className={`w-4 h-4 ${item.color} group-hover:scale-110 transition-transform`} />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 group-hover:text-gray-900 transition-colors">
+                  {item.label}
+                </span>
+             </motion.div>
+           ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -532,6 +560,7 @@ const LandingPage = () => {
   return (
     <div className="bg-white">
       <Hero />
+      <IntelligenceStrip />
       <StatsStrip />
       <FeatureCards />
       <HowItWorks />

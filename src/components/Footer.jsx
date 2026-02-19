@@ -5,7 +5,10 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t border-gray-50 pt-32 pb-16 overflow-hidden relative">
+    <footer className="bg-white pt-32 pb-16 overflow-hidden relative">
+      {/* Decorative Top Divider */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
+      
       {/* Background Polish */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       
@@ -30,8 +33,12 @@ const Footer = () => {
                 <motion.a
                   key={i}
                   href="#"
-                  whileHover={{ y: -4, scale: 1.1 }}
-                  className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-300 hover:text-primary hover:bg-primary/5 transition-all"
+                  whileHover={{ 
+                    y: -4, 
+                    scale: 1.1,
+                    boxShadow: "0 0 15px rgba(22, 163, 74, 0.2)"
+                  }}
+                  className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-300 hover:text-primary hover:bg-primary/5 transition-all outline-none"
                 >
                   <Icon className="w-5 h-5" />
                 </motion.a>
@@ -70,7 +77,7 @@ const Footer = () => {
               <p className="text-[11px] text-gray-400 mb-6 leading-relaxed font-medium uppercase tracking-widest">
                 Join our newsletter for clinical genomic insights.
               </p>
-              <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100 transition-all focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/30">
                 <input 
                   type="email" 
                   placeholder="Clinical Email" 

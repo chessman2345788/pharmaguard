@@ -4,13 +4,22 @@ import {
   FileUp, Search, Info, Trash2, 
   Send, Bot, User, Loader2,
   FileCheck, AlertCircle, Plus,
-  Sparkles, Activity
+  Sparkles, Activity, ShieldCheck
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { parseVCF } from '../utils/vcfParser';
 import { predictRisk } from '../utils/riskEngine';
 import { useNavigate } from 'react-router-dom';
 import CountUp from '../components/CountUp';
+import { ChevronDown, CheckCircle, Cpu, Layers, GitMerge, ArrowRight, FileCode } from 'lucide-react';
+
+const ANALYSIS_STEPS = [
+  { id: 'upload', label: 'Upload', icon: FileUp },
+  { id: 'parse', label: 'Parse', icon: Search },
+  { id: 'match', label: 'Match Genes', icon: Activity },
+  { id: 'predict', label: 'Predict Risk', icon: ShieldCheck },
+  { id: 'report', label: 'Report', icon: FileCheck }
+];
 
 const SUPPORTED_DRUGS = [
   'CODEINE', 'WARFARIN', 'CLOPIDOGREL', 
@@ -22,8 +31,11 @@ const AnalyzerPage = () => {
   const { 
     vcfData, setVcfData, 
     selectedDrugs, setSelectedDrugs,
-    setAnalysisResults, 
+    analysisResults, setAnalysisResults, 
     isAnalyzing, setIsAnalyzing,
+    explanationMode, setExplanationMode,
+    transparencyLevel, setTransparencyLevel,
+    isDemoMode, setDemoMode,
     error, setError 
   } = useStore();
 
@@ -33,6 +45,7 @@ const AnalyzerPage = () => {
   const [chatHistory, setChatHistory] = useState([
     { role: 'bot', text: 'Hello! I am PharmaGuard AI Assistant. Upload a VCF and select drugs to get started, or ask me about pharmacogenomics.' }
   ]);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -69,17 +82,63 @@ const AnalyzerPage = () => {
 
   const processVCF = async (file) => {
     setIsAnalyzing(true);
+    setError(null);
+    setCurrentStep(0);
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const content = e.target.result;
-        const variants = await parseVCF(content);
-        setVcfData(variants);
+      // Logic to cycle through steps for visual effect
+      const stepsCount = ANALYSIS_STEPS.length;
+      for (let i = 1; i < stepsCount; i++) {
+        setTimeout(() => setCurrentStep(i), i * 800);
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('selectedDrugs', selectedDrugs.join(','));
+
+      const response = await fetch("http://localhost:5000/api/analyze", {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Analysis failed");
+      }
+      
+      const results = await response.json();
+      setAnalysisResults(results);
+      setVcfData(results[0]?.pharmacogenomic_profile?.detected_variants || []);
+      
+      setTimeout(() => {
         setIsAnalyzing(false);
-      };
-      reader.readAsText(file);
+        navigate('/analytics');
+      }, stepsCount * 800);
     } catch (err) {
-      setError('Failed to parse VCF file.');
+      console.error(err);
+      setError(`VCF upload failed: ${err.message}. Please check file format.`);
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleDemoPatient = async () => {
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      const response = await fetch("http://localhost:5000/api/demo");
+      if (!response.ok) throw new Error("Failed to load demo data");
+      const results = await response.json();
+      
+      setAnalysisResults(results);
+      setVcfData(results[0]?.pharmacogenomic_profile?.detected_variants || []);
+      setFile({ name: 'demo_patient_001.vcf', size: 1240 });
+      setSelectedDrugs(['CODEINE', 'CLOPIDOGREL', 'SIMVASTATIN']);
+      
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        navigate('/analytics');
+      }, 1500);
+    } catch (err) {
+      setError("Failed to load demo patient data.");
       setIsAnalyzing(false);
     }
   };
@@ -93,44 +152,51 @@ const AnalyzerPage = () => {
   };
 
   const handleAnalyze = () => {
-    if (!vcfData || selectedDrugs.length === 0) {
+    if (!file || selectedDrugs.length === 0) {
       setError('Please upload genetic data and select at least one drug.');
       return;
     }
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      const results = predictRisk(vcfData, selectedDrugs);
-      setAnalysisResults(results);
-      setIsAnalyzing(false);
-      navigate('/results');
-    }, 2000);
+    processVCF(file);
   };
 
-  const handleSendChat = () => {
+  const handleSendChat = async () => {
     if (!chatInput.trim()) return;
     const userMsg = chatInput;
-    setChatHistory([...chatHistory, { role: 'user', text: userMsg }]);
+    setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
     setChatInput('');
     
-    // Mock bot response
-    setTimeout(() => {
-       let botMsg = "That's an interesting question about pharmacogenomics. Would you like me to analyze how this specifically relates to your current genetic profile?";
-       if (userMsg.toLowerCase().includes('cyp2d6')) {
-          botMsg = "CYP2D6 is one of the most important pharmacogenes, responsible for metabolizing about 25% of all clinically used drugs, including codeine, antidepressants, and beta-blockers.";
-       } else if (userMsg.toLowerCase().includes('codeine')) {
-          botMsg = "Codeine is a prodrug that needs to be converted into morphine by the CYP2D6 enzyme. If you are a 'Poor Metabolizer', you won't get pain relief. If 'Ultrarapid', you risk morphine toxicity.";
-       }
-       setChatHistory(prev => [...prev, { role: 'bot', text: botMsg }]);
-    }, 1000);
+    try {
+      const { geminiChatService } = await import('../utils/geminiChatService');
+      const botResponse = await geminiChatService(userMsg, analysisResults, transparencyLevel, explanationMode);
+      setChatHistory(prev => [...prev, { role: 'bot', text: botResponse }]);
+    } catch (err) {
+      setChatHistory(prev => [...prev, { role: 'bot', text: "Assistant error. Please check backend connection." }]);
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Demo Mode Presentation Labels */}
+        <AnimatePresence>
+          {isDemoMode && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="w-full flex justify-center space-x-8 mb-4"
+            >
+               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-4 py-1 rounded-full border border-primary/10">AI-Powered Pharmacogenomic Analysis</span>
+               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-4 py-1 rounded-full border border-primary/10">CPIC-Aligned Recommendations</span>
+               <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-4 py-1 rounded-full border border-primary/10">Variant-Level Explainability</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="flex flex-col lg:flex-row gap-8">
         
         {/* Left Panel: Analyzer Inputs */}
         <div className="flex-1 space-y-8">
-          <div className="bg-white/50 p-8 rounded-3xl border border-white shadow-xl backdrop-blur-sm">
+          <div className="bg-white/50 p-8 rounded-3xl border border-white shadow-xl backdrop-blur-sm relative">
              <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                    <Activity className="text-primary w-6 h-6" />
@@ -140,6 +206,90 @@ const AnalyzerPage = () => {
                    <p className="text-gray-500 text-sm">Upload genetic profile and select drug interactions</p>
                 </div>
              </div>
+
+             {/* Demo Scenario Switcher (Feature 6) */}
+             <div className="absolute top-8 right-8">
+                <div className="relative group">
+                   <button className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-primary transition-colors">
+                      <span>Demo Scenario</span>
+                      <ChevronDown className="w-3 h-3" />
+                   </button>
+                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                      {[
+                        { name: 'Codeine Toxicity', drugs: ['CODEINE'] },
+                        { name: 'Clopidogrel Failure', drugs: ['CLOPIDOGREL'] },
+                        { name: 'Multidrug Risk', drugs: ['CODEINE', 'CLOPIDOGREL', 'SIMVASTATIN', 'WARFARIN'] }
+                      ].map((s) => (
+                        <button 
+                          key={s.name}
+                          onClick={() => {
+                            setSelectedDrugs(s.drugs);
+                            handleDemoPatient();
+                          }}
+                          className="w-full text-left px-5 py-4 hover:bg-primary/5 text-xs font-bold text-gray-600 hover:text-primary transition-colors border-b last:border-0 border-gray-50"
+                        >
+                           {s.name}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+             </div>
+
+             {/* Analysis Pipeline Progress (Feature 2) */}
+             <AnimatePresence>
+               {isAnalyzing && (
+                 <motion.div 
+                   initial={{ opacity: 0, height: 0 }}
+                   animate={{ opacity: 1, height: 'auto' }}
+                   exit={{ opacity: 0, height: 0 }}
+                   className="mb-10 px-4"
+                 >
+                   <div className="relative flex justify-between items-center max-w-lg mx-auto">
+                      {/* Background line */}
+                      <div className="absolute top-1/2 left-0 w-full h-px bg-gray-100 -translate-y-1/2" />
+                      
+                      {/* Active progress line */}
+                      <motion.div 
+                        className="absolute top-1/2 left-0 h-px bg-primary -translate-y-1/2"
+                        initial={{ width: '0%' }}
+                        animate={{ width: `${(currentStep / (ANALYSIS_STEPS.length - 1)) * 100}%` }}
+                        transition={{ duration: 0.5 }}
+                      />
+
+                      {ANALYSIS_STEPS.map((step, idx) => {
+                        const Icon = step.icon;
+                        const isActive = idx <= currentStep;
+                        const isCurrent = idx === currentStep;
+                        
+                        return (
+                          <div key={idx} className="relative z-10 flex flex-col items-center">
+                             <motion.div 
+                               animate={{ 
+                                 scale: isCurrent ? [1, 1.2, 1] : 1,
+                                 backgroundColor: isActive ? '#16a34a' : '#fff'
+                               }}
+                               className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+                                 isActive ? 'border-primary shadow-lg shadow-primary/20' : 'border-gray-200'
+                               }`}
+                             >
+                               {isActive ? (
+                                 <CheckCircle className="w-4 h-4 text-white" />
+                               ) : (
+                                 <Icon className="w-4 h-4 text-gray-300" />
+                               )}
+                             </motion.div>
+                             <span className={`absolute -bottom-6 text-[8px] font-black uppercase tracking-widest whitespace-nowrap transition-colors ${
+                               isActive ? 'text-primary' : 'text-gray-300'
+                             }`}>
+                               {step.label}
+                             </span>
+                          </div>
+                        );
+                      })}
+                   </div>
+                 </motion.div>
+               )}
+             </AnimatePresence>
 
              {/* Drag & Drop Zone */}
              <div 
@@ -173,19 +323,14 @@ const AnalyzerPage = () => {
                         Select File
                       </label>
                       <button 
-                        onClick={() => {
-                          const demoVcf = [
-                            { gene: 'CYP2D6', diplotype: '*1/*4', rsid: 'rs3892097', ref: 'C', alt: 'T' },
-                            { gene: 'CYP2C19', diplotype: '*1/*2', rsid: 'rs4244285', ref: 'G', alt: 'A' },
-                            { gene: 'SLCO1B1', diplotype: '*5/*5', rsid: 'rs4149056', ref: 'T', alt: 'C' }
-                          ];
-                          setVcfData(demoVcf);
-                          setFile({ name: 'demo_patient_001.vcf', size: 1240 });
-                          setSelectedDrugs(['CODEINE', 'CLOPIDOGREL', 'SIMVASTATIN']);
-                        }}
-                        className="px-6 py-3 bg-primary/5 text-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/10 transition-all border border-primary/20"
+                        onClick={handleDemoPatient}
+                        className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all border ${
+                          isDemoMode 
+                            ? 'bg-primary text-white shadow-xl shadow-primary/20 border-primary animate-pulse' 
+                            : 'bg-primary/5 text-primary border-primary/20 hover:bg-primary/10'
+                        }`}
                       >
-                        Try Demo Patient
+                        {isDemoMode ? '🚀 Initialize Demo Patient' : 'Try Demo Patient'}
                       </button>
                     </div>
                   </>
@@ -273,7 +418,7 @@ const AnalyzerPage = () => {
                   {isAnalyzing ? (
                     <>
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span>Processing Genome...</span>
+                      <span>Analyzing Genome...</span>
                     </>
                   ) : (
                     <>
@@ -294,27 +439,100 @@ const AnalyzerPage = () => {
                   Reset
                 </button>
              </div>
-          </div>
+
+              {/* Feature: How PharmaGuard Works (Architecture View) */}
+              <AnimatePresence>
+                {isDemoMode && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="mt-12 bg-white/50 p-8 rounded-3xl border border-white shadow-xl backdrop-blur-sm"
+                  >
+                     <div className="flex items-center space-x-3 mb-8">
+                        <Cpu className="text-primary w-5 h-5" />
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-900 leading-none">System Architecture Overview</h4>
+                     </div>
+                     <div className="flex items-center justify-between px-4">
+                        {[
+                           { icon: FileCode, label: 'VCF Data' },
+                           { icon: Cpu, label: 'Risk Engine' },
+                           { icon: GitMerge, label: 'CPIC Logic' },
+                           { icon: Sparkles, label: 'AI Insight' }
+                        ].map((step, idx, arr) => (
+                           <React.Fragment key={idx}>
+                              <div className="flex flex-col items-center space-y-3">
+                                 <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center border border-primary/10">
+                                    <step.icon className="w-6 h-6 text-primary" />
+                                 </div>
+                                 <span className="text-[7px] font-black uppercase tracking-widest text-gray-400 text-center">{step.label}</span>
+                              </div>
+                              {idx < arr.length - 1 && (
+                                 <ArrowRight className="w-4 h-4 text-gray-200" />
+                              )}
+                           </React.Fragment>
+                        ))}
+                     </div>
+                     <p className="mt-8 text-[9px] text-gray-400 font-medium text-center uppercase tracking-widest leading-relaxed">
+                        Secure end-to-end pipeline: Local parsing → Federated Risk Assessment → AI Clinical Narrative Generation.
+                     </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+           </div>
         </div>
 
         {/* Right Panel: AI Chatbot */}
         <div className="w-full lg:w-[400px] flex flex-col">
           <div className="bg-white rounded-3xl border border-gray-100 shadow-xl flex flex-col h-[700px] overflow-hidden">
-             {/* Header */}
-             <div className="bg-primary p-6 text-white">
-                <div className="flex items-center space-x-3">
-                   <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                      <Bot className="w-7 h-7" />
-                   </div>
-                   <div>
-                      <h3 className="font-bold text-lg">PharmaGuard Assistant</h3>
-                      <div className="flex items-center space-x-2 text-green-100 text-xs uppercase tracking-widest font-bold">
-                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                         <span>AI Online</span>
-                      </div>
-                   </div>
-                </div>
-             </div>
+              {/* Header */}
+              <div className="bg-primary p-6 text-white flex flex-col">
+                 <div className="flex justify-between items-center w-full mb-6">
+                    <div className="flex items-center space-x-3">
+                       <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                          <Bot className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <h3 className="font-bold text-base leading-none mb-1">PharmaGuard Assistant</h3>
+                          <div className="flex items-center space-x-2 text-green-100 text-[8px] uppercase tracking-widest font-black">
+                             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                             <span>AI Online</span>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Feature 2: AI Transparency Slider */}
+                 <div className="flex flex-col space-y-2 relative z-10 w-full mb-2">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-white/60">
+                       <span>AI Depth Control</span>
+                       <span className="text-white/90">{transparencyLevel}</span>
+                    </div>
+                    <div className="relative h-1 bg-white/10 rounded-full overflow-hidden">
+                       <input 
+                         type="range" 
+                         min="0" 
+                         max="2" 
+                         step="1"
+                         value={transparencyLevel === 'simple' ? 0 : transparencyLevel === 'detailed' ? 1 : 2}
+                         onChange={(e) => {
+                           const val = parseInt(e.target.value);
+                           setTransparencyLevel(val === 0 ? 'simple' : val === 1 ? 'detailed' : 'research');
+                         }}
+                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                       />
+                       <motion.div 
+                         className="absolute top-0 left-0 h-full bg-white rounded-full"
+                         animate={{ width: transparencyLevel === 'simple' ? '33%' : transparencyLevel === 'detailed' ? '66%' : '100%' }}
+                       />
+                    </div>
+                    <div className="flex justify-between text-[7px] font-black text-white/40 uppercase tracking-tighter">
+                       <span>Basic</span>
+                       <span>Standard</span>
+                       <span>Deep</span>
+                    </div>
+                 </div>
+              </div>
 
              {/* Chat History */}
              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50/50">

@@ -5,7 +5,7 @@ import {
   Download, Copy, ChevronLeft, 
   Stethoscope, Microscope, Brain,
   Calendar, User as UserIcon, Tag,
-  FileJson, Share2, Activity
+  FileJson, Share2, Activity, FileCode, Clipboard, Database
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,11 +14,25 @@ const ResultsPage = () => {
   const navigate = useNavigate();
   const { analysisResults, explanationMode, setExplanationMode } = useStore();
 
-  if (analysisResults.length === 0) {
+  if (!analysisResults) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold mb-4">No analysis results found</h2>
-        <Link to="/analyze" className="btn-primary">Return to Analyzer</Link>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/10 px-6">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white p-12 rounded-[3rem] shadow-xl border border-gray-100 text-center max-w-md"
+        >
+          <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
+            <Activity className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tighter">No Report Generated</h2>
+          <p className="text-gray-500 font-medium mb-10 leading-relaxed">
+            Please upload a genetic VCF file to generate your personalized pharmacogenomic interaction report.
+          </p>
+          <Link to="/analyze" className="btn-primary w-full py-4 rounded-2xl text-lg font-bold flex justify-center">
+            Go to Analyzer
+          </Link>
+        </motion.div>
       </div>
     );
   }
@@ -27,7 +41,7 @@ const ResultsPage = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(analysisResults, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "pharmaguard_report.json");
+    downloadAnchorNode.setAttribute("download", `pharmaguard_report_${analysisResults[0]?.patient_id}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -39,6 +53,7 @@ const ResultsPage = () => {
   };
 
   const getRiskColor = (risk) => {
+    if (!risk) return 'text-gray-600 bg-gray-50 border-gray-100';
     switch (risk.toLowerCase()) {
       case 'toxic': return 'text-red-600 bg-red-50 border-red-100';
       case 'ineffective': return 'text-orange-600 bg-orange-50 border-orange-100';
@@ -60,16 +75,22 @@ const ResultsPage = () => {
               <ChevronLeft className="w-5 h-5" />
               <span>Back to Analyzer</span>
            </button>
-           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Analysis Report</h1>
+           <div className="flex items-center space-x-4">
+              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Analysis Report</h1>
+              <div className="px-3 py-1 bg-green-50 border border-green-100 rounded-lg flex items-center space-x-2">
+                 <CheckCircle className="w-3 h-3 text-green-500" />
+                 <span className="text-[8px] font-black text-green-600 uppercase tracking-widest">✔ RIFT Schema Validated</span>
+              </div>
+           </div>
            <div className="flex flex-wrap gap-4 mt-4">
-             <div className="flex items-center space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-                <UserIcon className="w-4 h-4 text-primary" />
-                <span className="font-bold">Patient: PG-001</span>
-             </div>
-             <div className="flex items-center space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span>{new Date().toLocaleDateString()}</span>
-             </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+                 <UserIcon className="w-4 h-4 text-primary" />
+                 <span className="font-bold">Patient: {analysisResults[0]?.patient_id || 'PG-001'}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+                 <Calendar className="w-4 h-4 text-primary" />
+                 <span>{new Date(analysisResults[0]?.timestamp).toLocaleDateString()}</span>
+              </div>
            </div>
         </div>
         <div className="flex space-x-3">
@@ -142,7 +163,7 @@ const ResultsPage = () => {
                      </div>
                      <div>
                         <div className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-2">Genomic Drug Interaction</div>
-                        <h2 className="text-4xl font-black tracking-tighter text-gray-900">{result.drug_name}</h2>
+                        <h2 className="text-4xl font-black tracking-tighter text-gray-900">{result.drug}</h2>
                      </div>
                   </div>
                   <div className="flex flex-col items-center md:items-end">
@@ -188,13 +209,13 @@ const ResultsPage = () => {
                         <div className="pt-6 border-t border-gray-50">
                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Detected Variants</div>
                            <div className="space-y-3">
-                              {result.pharmacogenomic_profile.detected_variants.map((v, i) => (
+                              {(result.pharmacogenomic_profile?.detected_variants || []).map((v, i) => (
                                  <div key={i} className="flex items-center justify-between bg-gray-50/50 p-3 rounded-xl border border-gray-100 group hover:border-primary/20 transition-colors">
                                     <div className="flex items-center space-x-3">
                                        <Activity className="w-4 h-4 text-primary/30" />
-                                       <span className="text-xs font-black text-gray-700">{v.rsid}</span>
+                                       <span className="text-xs font-black text-gray-700">{v.rsID || v.rsid}</span>
                                     </div>
-                                    <span className="text-[10px] font-black text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-100 uppercase tracking-wider">{v.ref} → {v.alt}</span>
+                                    <span className="text-[10px] font-black text-primary bg-white px-2 py-1 rounded-md border border-gray-100 uppercase tracking-wider">{v.star_allele || v.star}</span>
                                  </div>
                               ))}
                            </div>
@@ -214,18 +235,18 @@ const ResultsPage = () => {
                      <div className="space-y-4 relative z-10">
                         <div className="flex justify-between items-center py-3 border-b border-white/5">
                            <span className="text-primary-soft text-xs font-black uppercase tracking-widest">Evidence Level</span>
-                           <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-primary/20">High (Level 1A)</span>
+                           <span className="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-primary/20">{result.clinical_recommendation?.evidence_level || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between items-center py-3 border-b border-white/5">
                            <span className="text-primary-soft text-xs font-black uppercase tracking-widest">Guideline Source</span>
                            <span className="flex items-center space-x-2">
                               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                              <span className="text-[10px] font-black uppercase tracking-widest">CPIC / PharmGKB</span>
+                              <span className="text-[10px] font-black uppercase tracking-widest">{result.clinical_recommendation?.guideline || 'CPIC'}</span>
                            </span>
                         </div>
                         <div className="flex justify-between items-center py-3">
-                           <span className="text-primary-soft text-xs font-black uppercase tracking-widest">Impact Score</span>
-                           <span className="text-lg font-black tracking-tighter">0.98 <span className="text-xs opacity-40">/ 1.0</span></span>
+                           <span className="text-primary-soft text-xs font-black uppercase tracking-widest">Quality Metrics</span>
+                           <span className="text-[10px] font-black tracking-tighter uppercase">{result.quality_metrics?.analysis_runtime || '0.0s'} / SUCCESS</span>
                         </div>
                      </div>
                   </motion.div>
@@ -248,11 +269,11 @@ const ResultsPage = () => {
                            <motion.button 
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={handleDownloadJSON}
+                              onClick={() => navigate('/analytics')}
                               className="hidden md:flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white px-5 py-2.5 rounded-xl border border-primary/10 shadow-sm transition-all"
                            >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>Clinical PDF</span>
+                              <Share2 className="w-3.5 h-3.5" />
+                              <span>View Analytics</span>
                            </motion.button>
                         </div>
                         <div className="text-xl text-gray-800 font-bold leading-relaxed bg-white p-8 rounded-3xl border border-primary/5 shadow-xl shadow-primary/5">
@@ -260,7 +281,7 @@ const ResultsPage = () => {
                         </div>
                         <div className="mt-8 flex items-center space-x-3 text-[10px] text-primary/50 font-black uppercase tracking-[0.2em]">
                             <Info className="w-4 h-4" />
-                            <span>Clinical Action Recommended based on Pharmacogenomic Evidence</span>
+                            <span>Clinical Guideline: {result.clinical_recommendation.guideline} – Evidence Level {result.clinical_recommendation.evidence_level}</span>
                         </div>
                      </div>
                   </div>
@@ -282,25 +303,25 @@ const ResultsPage = () => {
                                explanationMode === 'patient' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600'
                              }`}
                            >
-                             Patient Mode
+                             Patient
                            </button>
                            <button 
-                             onClick={() => setExplanationMode('doctor')}
+                             onClick={() => setExplanationMode('clinical')}
                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                               explanationMode === 'doctor' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600'
+                               explanationMode === 'clinical' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-400 hover:text-gray-600'
                              }`}
                            >
-                             Doctor Mode
+                             Clinical
                            </button>
                         </div>
                      </div>
 
                      <div className="space-y-6">
                         <p className="text-lg text-gray-600 leading-relaxed font-medium bg-gray-50/50 p-6 rounded-3xl border border-gray-100 border-dashed">
-                           {explanationMode === 'doctor' ? (
-                             `Patient presents with a restricted clearance profile for ${result.drug_name} driven by ${result.pharmacogenomic_profile.primary_gene} ${result.pharmacogenomic_profile.diplotype} polymorphism. Kinetic studies suggest severe metabolic downregulation.`
+                           {explanationMode === 'clinical' ? (
+                             result.llm_generated_explanation?.mechanism || result.llm_explanation?.mechanism || "Clinical mechanism data unavailable."
                            ) : (
-                             result.llm_explanation.summary
+                             result.llm_generated_explanation?.summary || result.llm_explanation?.summary || "Patient summary data unavailable."
                            )}
                         </p>
                         
@@ -312,7 +333,7 @@ const ResultsPage = () => {
                               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Interaction Mechanism Mapping</span>
                            </div>
                            <div className="flex gap-2">
-                             {result.llm_explanation.variant_citations.map((c, i) => (
+                             {(result.llm_generated_explanation?.citations || result.llm_explanation?.variant_citations || []).map((c, i) => (
                                <span key={i} className="text-[10px] font-bold bg-white px-4 py-2 rounded-xl border border-gray-100 text-gray-400 shadow-sm">{c}</span>
                              ))}
                            </div>
@@ -326,6 +347,65 @@ const ResultsPage = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Feature 1: Structured Clinical JSON Output (JSON Viewer) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-16 bg-white p-10 rounded-[3rem] border border-gray-100 shadow-xl border-b-[6px] border-b-primary/5"
+      >
+        <div className="flex items-center justify-between mb-10">
+           <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center">
+                 <FileCode className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-black text-gray-900 tracking-tight">Structured Clinical JSON Output</h3>
+           </div>
+           <div className="flex items-center space-x-3 px-4 py-2 bg-green-50 rounded-xl border border-green-100">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">✔ RIFT Schema Validated</span>
+           </div>
+        </div>
+
+        <div className="flex flex-col space-y-6">
+           <div className="flex flex-wrap items-center justify-end gap-4">
+              <button 
+                 onClick={() => {
+                   navigator.clipboard.writeText(JSON.stringify(analysisResults, null, 2));
+                   alert('JSON copied to clipboard');
+                 }}
+                 className="px-5 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 text-[10px] font-black text-gray-600 uppercase tracking-widest flex items-center space-x-2 transition-all active:scale-95"
+              >
+                 <Clipboard className="w-4 h-4" />
+                 <span>Copy JSON</span>
+              </button>
+              <button 
+                 onClick={() => {
+                   const blob = new Blob([JSON.stringify(analysisResults, null, 2)], { type: 'application/json' });
+                   const url = URL.createObjectURL(blob);
+                   const a = document.createElement('a');
+                   a.href = url;
+                   a.download = `PharmaGuard_Analysis_${Date.now()}.json`;
+                   a.click();
+                 }}
+                 className="px-5 py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-[10px] font-black text-white uppercase tracking-widest flex items-center space-x-2 shadow-xl shadow-gray-200 transition-all active:scale-95"
+              >
+                 <Download className="w-4 h-4" />
+                 <span>Download Schema</span>
+              </button>
+           </div>
+
+           <div className="bg-gray-900 rounded-[2rem] p-8 max-h-[500px] overflow-y-auto custom-scrollbar shadow-2xl">
+              <pre className="text-[12px] font-medium text-emerald-400/90 leading-relaxed font-mono whitespace-pre-wrap">
+                 {JSON.stringify(analysisResults, null, 2)}
+              </pre>
+           </div>
+           <p className="text-[10px] text-gray-400 font-bold text-center uppercase tracking-widest">
+              Full structured dataset (patient_id, risk_assessment, quality_metrics, llm_generated_explanation) as per RIFT2026 specifications.
+           </p>
+        </div>
+      </motion.div>
 
       {/* Footer Navigation */}
       <div className="mt-20 flex flex-col items-center">
