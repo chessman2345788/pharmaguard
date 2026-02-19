@@ -10,7 +10,7 @@ Submitted for **RIFT 2026 Hackathon** within the **Pharmacogenomics / Explainabl
 
 ## 🔗 Live Demo & Video
 
-- **Live Application**: [https://healtpharma.netlify.app/](https://healtpharma.netlify.app/)
+- **Live Application**: [https://healthpharma.netlify.app/](https://healthpharma.netlify.app/)
 - **Demo Video**: [LinkedIn Video Link](https://linkedin.com) _(Placeholder)_
 
 ## 🏗️ Architecture
