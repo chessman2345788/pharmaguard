@@ -3,7 +3,7 @@
  * Central client for all backend calls. Replaces all mock/local processing.
  */
 
-const API_BASE = '/api'; // proxied to http://localhost:5001 via Vite
+const API_BASE = '/api'; // proxied to http://localhost:5000 via Vite
 
 /**
  * Upload a VCF file and analyze against selected drugs.
