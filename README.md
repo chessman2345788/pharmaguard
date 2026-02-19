@@ -1,21 +1,3 @@
-<<<<<<< HEAD
-# React + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
 # PharmaGuard - Pharmacogenomic Risk Prediction System
 
 ## 🚀 Project Overview
@@ -24,9 +6,11 @@ PharmaGuard is an AI-powered comprehensive pharmacogenomic analysis tool designe
 
 Submitted for **RIFT 2026 Hackathon** within the **Pharmacogenomics / Explainable AI Track**.
 
+![PharmaGuard AI Interface](screenshot.png)
+
 ## 🔗 Live Demo & Video
 
-- **Live Application**: [https://pharmaguard-demo.vercel.app](https://pharmaguard-demo.vercel.app) _(Placeholder)_
+- **Live Application**: [https://healtpharma.netlify.app/](https://healtpharma.netlify.app/)
 - **Demo Video**: [LinkedIn Video Link](https://linkedin.com) _(Placeholder)_
 
 ## 🏗️ Architecture
@@ -130,4 +114,3 @@ Analyzes a VCF file against a list of drugs.
 ---
 
 _Built with ❤️ for RIFT 2026_
->>>>>>> 500bb36e9daa8dea6b5101f080debd160c26d6b1
