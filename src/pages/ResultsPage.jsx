@@ -2,19 +2,17 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
    AlertTriangle, CheckCircle, Info,
-   Download, Copy, ChevronLeft,
+   Copy, ChevronLeft,
    Stethoscope, Microscope, Brain,
    Calendar, User as UserIcon, Tag,
-   FileJson, Share2, Activity, FileText, Loader2
+   FileJson, Share2, Activity
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { Link, useNavigate } from 'react-router-dom';
-import { generatePDF } from '../utils/pdfExport';
 
 const ResultsPage = () => {
    const navigate = useNavigate();
    const { analysisResults, explanationMode, setExplanationMode } = useStore();
-   const [isPdfLoading, setIsPdfLoading] = useState(false);
 
    if (analysisResults.length === 0) {
       return (
@@ -38,19 +36,6 @@ const ResultsPage = () => {
    const handleCopyJSON = () => {
       navigator.clipboard.writeText(JSON.stringify(analysisResults, null, 2));
       alert('Report JSON copied to clipboard!');
-   };
-
-   const handleDownloadPDF = async () => {
-      setIsPdfLoading(true);
-      try {
-         await new Promise(r => setTimeout(r, 50)); // let React re-render spinner
-         generatePDF(analysisResults);
-      } catch (err) {
-         console.error('PDF export failed:', err);
-         alert('PDF generation failed. Please try again.');
-      } finally {
-         setIsPdfLoading(false);
-      }
    };
 
    const getRiskColor = (risk) => {
@@ -95,17 +80,6 @@ const ResultsPage = () => {
                <button onClick={handleDownloadJSON} className="btn-secondary flex items-center space-x-2">
                   <FileJson className="w-4 h-4" />
                   <span>JSON</span>
-               </button>
-               <button
-                  onClick={handleDownloadPDF}
-                  disabled={isPdfLoading}
-                  className="btn-primary flex items-center space-x-2 disabled:opacity-70"
-               >
-                  {isPdfLoading ? (
-                     <><Loader2 className="w-4 h-4 animate-spin" /><span>Generating PDF...</span></>
-                  ) : (
-                     <><FileText className="w-4 h-4" /><span>Download PDF</span></>
-                  )}
                </button>
             </div>
          </div>
@@ -270,15 +244,6 @@ const ResultsPage = () => {
                                     </div>
                                     <h3 className="font-black text-2xl tracking-tight text-gray-900">Clinical Recommendation</h3>
                                  </div>
-                                 <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={handleDownloadPDF}
-                                    className="hidden md:flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-primary bg-white px-5 py-2.5 rounded-xl border border-primary/10 shadow-sm transition-all"
-                                 >
-                                    <Download className="w-3.5 h-3.5" />
-                                    <span>Clinical PDF</span>
-                                 </motion.button>
                               </div>
                               <div className="text-xl text-gray-800 font-bold leading-relaxed bg-white p-8 rounded-3xl border border-primary/5 shadow-xl shadow-primary/5">
                                  {result.clinical_recommendation.dosing_advice}
